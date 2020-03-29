@@ -49,7 +49,7 @@ OFFSET 4000 ROWS
 FETCH NEXT 200 ROWS ONLY
 
 
--- nested classes count distinct, ie all analysis classes
+-- nested classes count distinct, ie all properties
 SELECT 	
 	[key], COUNT(*)
 FROM JsonTest CROSS APPLY OPENJSON (JsonTest.DynamicData, '$.PropertyClassesfoo') AS Classes

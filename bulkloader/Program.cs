@@ -46,7 +46,7 @@ namespace bulkloader
                 };
 
                 await bulkcopy.WriteToServerAsync(table);
-                Console.WriteLine($"Wrote analysis {i} after {stopwatch.ElapsedMilliseconds} ms");
+                Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
             }
 
             //for (int i = 0; i < 100; i++)
@@ -78,7 +78,7 @@ namespace bulkloader
 
 
             //    await bulkcopy.WriteToServerAsync(table);
-            //    Console.WriteLine($"Wrote analysis {i} after {stopwatch.ElapsedMilliseconds} ms");
+            //    Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
             //}
 
             Console.WriteLine($"Done after {stopwatch.ElapsedMilliseconds}ms");
