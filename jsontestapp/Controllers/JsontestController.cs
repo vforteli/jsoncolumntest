@@ -23,27 +23,11 @@ namespace jsontestapp.Controllers
 
 
         [HttpGet("api/json/{id}")]
-        public async Task<IActionResult> Get([FromRoute]Guid id, [FromQuery]string orderBy = "ObjectId DESC", [FromQuery]string filter = "", [FromQuery]int top = 50, [FromQuery]int skip = 0)
+        public async Task<IActionResult> Get([FromRoute]Guid id, [FromQuery]string orderBy = "ObjectId", [FromQuery]string filter = "", [FromQuery]int top = 50, [FromQuery]int skip = 0)
         {
-            var jsonPathParameter = "";
-            if (orderBy.Contains("/"))
-            {
-                var parts = orderBy.Split("/");
-                var column = parts[0];
-                jsonPathParameter = "$." + string.Join(".", parts.Skip(1).Select(o => $@"""{o}"""));
-                orderBy = $"JSON_VALUE({column}, @jsonPath) DESC";
-            }
-            else
-            {
-                var parts = orderBy.Split(" ");
-                var properties = typeof(RowModel).GetProperties().Select(o => o.Name.ToUpperInvariant());
-                if (!properties.Contains(parts[0].ToUpperInvariant()))
-                {
-                    return BadRequest($"Order by is not a valid column: {orderBy}");
-                }
-            }
+            var (column, jsonPathParameter) = ToPathOrColumn<RowModel>(orderBy);
 
-            _logger.LogInformation($"Converted order by column: {orderBy}, parameter: {jsonPathParameter}");
+            _logger.LogInformation($"Converted order by column: {column}, parameter: {jsonPathParameter}");
 
 
             var query = $@"
@@ -61,7 +45,7 @@ namespace jsontestapp.Controllers
                     --FROM JsonTestPartitioned
                     WHERE 
 	                    PartitionId = @id
-                    ORDER BY {orderBy}
+                    ORDER BY {column} DESC
                     OFFSET @skip ROWS
                     FETCH NEXT @top ROWS ONLY";
 
@@ -97,12 +81,35 @@ namespace jsontestapp.Controllers
 
         /// <summary>
         /// Convert a path to either a column or proper json_value column and path
+        /// Validates the column against a model passed in as T
         /// </summary>
-        /// <param name="input"></param>
+        /// <param name="input">column[/jsonpath]</param>
         /// <returns></returns>
-        private string ToPathOrColumn<T>(string path)
+        private (string column, string jsonPathParameter) ToPathOrColumn<T>(string input)
         {
-            throw new NotImplementedException();
+            if (string.IsNullOrEmpty(input))
+            {
+                throw new ArgumentException("Column cannot be null or empty");
+            }
+
+            var parts = input.Split("/");
+            var column = parts[0];
+
+            var properties = typeof(T).GetProperties().Select(o => o.Name.ToUpperInvariant());
+            if (!properties.Contains(column.ToUpperInvariant()))
+            {
+                throw new ArgumentException($"Input does not contain a valid column name: {input}");
+            }
+
+            // if the input only contains one part it is a real column
+            if (parts.Length == 1)
+            {
+                return (column, null);
+            }
+
+            // otherwise the first part is the column, and the rest is the json path
+            var jsonPathParameter = "$." + string.Join(".", parts.Skip(1).Select(o => $@"""{o}"""));
+            return ($"JSON_VALUE({column}, @jsonPath)", jsonPathParameter);
         }
     }
 }
