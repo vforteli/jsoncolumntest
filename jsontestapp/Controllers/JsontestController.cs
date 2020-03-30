@@ -71,7 +71,7 @@ namespace jsontestapp.Controllers
 
                 return Ok(new
                 {
-                    orderBy = orderBy,
+                    orderBy = column,
                     executionMilliseconds = stopwatch.ElapsedMilliseconds,
                     items = result,
                 });
@@ -116,6 +116,7 @@ namespace jsontestapp.Controllers
         /// <summary>
         /// Convert a path to either a column or proper json_value column and path
         /// Validates the column against a model passed in as T
+        /// LocalDb and previous versions of SQL server do not support json paths as parameters
         /// </summary>
         /// <param name="input">column[/jsonpath]</param>
         /// <returns></returns>
