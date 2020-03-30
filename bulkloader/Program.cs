@@ -16,72 +16,75 @@ namespace bulkloader
         static async Task Main(string[] args)
         {
             Console.WriteLine("Starting bulk insert");
-            var connectionString = "Data Source=FL494;Initial Catalog=efcore;Integrated Security=True;";
-            using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
-            var stopwatch = Stopwatch.StartNew();
-
-            for (int i = 0; i < 100; i++)
+            var connectionString = "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=jsontest;Integrated Security=True;";
+            using (var connection = new SqlConnection(connectionString))
             {
-                var table = new DataTable();
-                table.Columns.Add("PartitionId", typeof(Guid));
-                table.Columns.Add("ObjectId", typeof(Guid));
-                table.Columns.Add("DynamicData", typeof(String));
+                await connection.OpenAsync();
+                var stopwatch = Stopwatch.StartNew();
 
-
-                var PartitionId = new Guid(i.ToString().PadLeft(32).Replace(' ', '0'));
-
-                for (int items = 0; items < 100000; items++)
+                for (int i = 20; i < 100; i++)
                 {
-                    var ObjectId = Guid.NewGuid();
-                    var randomstuff = GenerateObject();
-                    table.Rows.Add(PartitionId, ObjectId, randomstuff);
+                    var table = new DataTable();
+                    table.Columns.Add("PartitionId", typeof(Guid));
+                    table.Columns.Add("ObjectId", typeof(Guid));
+                    table.Columns.Add("DynamicData", typeof(string));
+
+
+                    var PartitionId = new Guid(i.ToString().PadLeft(32).Replace(' ', '0'));
+
+                    for (int items = 0; items < 10000; items++)
+                    {
+                        var ObjectId = Guid.NewGuid();
+                        var randomstuff = GenerateObject();
+                        table.Rows.Add(PartitionId, ObjectId, randomstuff);
+                    }
+
+                    var bulkcopy = new SqlBulkCopy(connection)
+                    {
+                        DestinationTableName = "jsontest",
+                        BatchSize = 10000,
+                        BulkCopyTimeout = 300,
+                    };
+
+                    await bulkcopy.WriteToServerAsync(table);
+                    Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
                 }
 
-                var bulkcopy = new SqlBulkCopy(connection)
-                {
-                    DestinationTableName = "jsontest",
-                    BatchSize = 10000,
-                    BulkCopyTimeout = 300,
-                };
 
-                await bulkcopy.WriteToServerAsync(table);
-                Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
+                //for (int i = 0; i < 100; i++)
+                //{
+                //    var table = new DataTable();
+                //    table.Columns.Add("PartitionId", typeof(Guid));
+                //    table.Columns.Add("ObjectId", typeof(Guid));
+                //    table.Columns.Add("DynamicData1", typeof(String));
+                //    table.Columns.Add("DynamicData2", typeof(String));
+                //    table.Columns.Add("DynamicData3", typeof(String));
+                //    table.Columns.Add("DynamicData4", typeof(String));
+                //    table.Columns.Add("DynamicData5", typeof(String));
+
+                //    var PartitionId = new Guid(i.ToString().PadLeft(32).Replace(' ', '0'));
+
+                //    for (int users = 0; users < 50000; users++)
+                //    {
+                //        var ObjectId = Guid.NewGuid();
+                //        var randomstuff = GeneratePartitionedObject();
+                //        table.Rows.Add(PartitionId, ObjectId, randomstuff[0], randomstuff[1], randomstuff[2], randomstuff[3], randomstuff[4]);
+                //    }
+
+                //    var bulkcopy = new SqlBulkCopy(connection)
+                //    {
+                //        DestinationTableName = "jsontestpartitioned",
+                //        BatchSize = 10000,
+                //        BulkCopyTimeout = 300,
+                //    };
+
+
+                //    await bulkcopy.WriteToServerAsync(table);
+                //    Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
+                //}
+
+                Console.WriteLine($"Done after {stopwatch.ElapsedMilliseconds}ms");
             }
-
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    var table = new DataTable();
-            //    table.Columns.Add("PartitionId", typeof(Guid));
-            //    table.Columns.Add("ObjectId", typeof(Guid));
-            //    table.Columns.Add("DynamicData1", typeof(String));
-            //    table.Columns.Add("DynamicData2", typeof(String));
-            //    table.Columns.Add("DynamicData3", typeof(String));
-            //    table.Columns.Add("DynamicData4", typeof(String));
-            //    table.Columns.Add("DynamicData5", typeof(String));
-
-            //    var PartitionId = new Guid(i.ToString().PadLeft(32).Replace(' ', '0'));
-
-            //    for (int users = 0; users < 50000; users++)
-            //    {
-            //        var ObjectId = Guid.NewGuid();
-            //        var randomstuff = GeneratePartitionedObject();
-            //        table.Rows.Add(PartitionId, ObjectId, randomstuff[0], randomstuff[1], randomstuff[2], randomstuff[3], randomstuff[4]);
-            //    }
-
-            //    var bulkcopy = new SqlBulkCopy(connection)
-            //    {
-            //        DestinationTableName = "jsontestpartitioned",
-            //        BatchSize = 10000,
-            //        BulkCopyTimeout = 300,
-            //    };
-
-
-            //    await bulkcopy.WriteToServerAsync(table);
-            //    Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
-            //}
-
-            Console.WriteLine($"Done after {stopwatch.ElapsedMilliseconds}ms");
         }
 
 
@@ -96,11 +99,12 @@ namespace bulkloader
                 Property5 = "somethingslightlylongerdsf sdkfjhs dfkjhdsfksjd hfkjkf jsdfkj ksdfhere lol wtf hurr derp?",
                 Proandsincethesecanbereeeeeeeeeaallybathshitinsanelonghereissomerealldlongtextwtgfsfperty6 = "somethingslightlylongerdsf sdkfjhs dfkjhdsfksjd hfkjkf jsdfkj ksdfhere lol wtf hurr derp?",
                 Proandsincethesfdfffecanbereeeeeeeeeaallybathshitinsanelonghereissomerealldlongtextwtgfsfperty6 = "somethinjsdfkj ksdfhere lol wtf hurr derp?",
-                PropertyClasses = new Dictionary<String, Object>(),
-                PropertyClassesNumbers = new Dictionary<String, Object>(),
-                PropertyClassesNumbersNumber = new Dictionary<String, Object>(),
-                PropertyClassesfoo = new Dictionary<String, Object>(),
-                PropertyClassesbar = new Dictionary<String, Object>(),
+                PropertyClasses = new Dictionary<string, object>(),
+                PropertyClassesNumbers = new Dictionary<string, object>(),
+                PropertyClassesNumbersNumber = new Dictionary<string, object>(),
+                PropertyClassesfoo = new Dictionary<string, object>(),
+                PropertyClassesbar = new Dictionary<string, object>(),
+                PropertyClassesLongNames = new Dictionary<string, object>(),
             };
 
             Enumerable.Range(2015, 5).ToList().ForEach(o =>
@@ -111,10 +115,12 @@ namespace bulkloader
                     y = _random.Next(5000, 10000),
                 });
             });
+
             Enumerable.Range(0, 20).ToList().ForEach(o => { foo.PropertyClassesNumbers.Add($"subpropdynamic{o}", _random.Next(5000, 20000)); });
             Enumerable.Range(2000, 20).ToList().ForEach(o => { foo.PropertyClassesNumbersNumber.Add(o.ToString(), _random.Next(5000, 20000)); });
             Enumerable.Range(2010, 10).ToList().ForEach(o => { foo.PropertyClassesfoo.Add(o.ToString(), _random.Next(5000, 20000)); });
             Enumerable.Range(2000, 20).ToList().ForEach(o => { foo.PropertyClassesbar.Add(o.ToString(), _random.Next(5000, 20000)); });
+            Enumerable.Range(2015, 5).ToList().ForEach(o => { foo.PropertyClassesLongNames.Add($"Some really complex property name with åäö {o}", _random.Next(5000, 20000)); });
 
             return JsonSerializer.Serialize(foo);
         }
@@ -133,25 +139,25 @@ namespace bulkloader
                 Proandsincethesfdfffecanbereeeeeeeeeaallybathshitinsanelonghereissomerealldlongtextwtgfsfperty6 = "somethinjsdfkj ksdfhere lol wtf hurr derp?",
             };
 
-            var partition2 = new { PropertyClasses = new Dictionary<String, String>() };
+            var partition2 = new { PropertyClasses = new Dictionary<string, string>() };
             for (int i = 0; i < _random.Next(10, 30); i++)
             {
                 partition2.PropertyClasses.Add($"subprop{i}", "somevaluehere");
             }
 
-            var partition3 = new { PropertyClassesNumbers = new Dictionary<String, int>() };
+            var partition3 = new { PropertyClassesNumbers = new Dictionary<string, int>() };
             for (int i = 0; i < _random.Next(10, 30); i++)
             {
                 partition3.PropertyClassesNumbers.Add($"subpropdynamic{i}", _random.Next(5000, 20000));
             }
 
-            var partition4 = new { PropertyClassesfoo = new Dictionary<String, int>() };
+            var partition4 = new { PropertyClassesfoo = new Dictionary<string, int>() };
             for (int i = 0; i < _random.Next(20, 30); i++)
             {
                 partition4.PropertyClassesfoo.Add($"subp fefe ef lekfwe fwefwef wefwefwefwef efewfropdynamic{i}", _random.Next(5000, 20000));
             }
 
-            var partition5 = new { PropertyClassesbar = new Dictionary<String, int>() };
+            var partition5 = new { PropertyClassesbar = new Dictionary<string, int>() };
             for (int i = 0; i < _random.Next(20, 30); i++)
             {
                 partition5.PropertyClassesbar.Add($"subp fefe eefefeff lekfwe fwefwef wefwefwefwef efewfropdynamic{i}", _random.Next(5000, 20000));
