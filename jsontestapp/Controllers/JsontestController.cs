@@ -29,20 +29,18 @@ namespace jsontestapp.Controllers
 
             _logger.LogInformation($"Converted order by column: {column}, parameter: {jsonPathParameter}");
 
-
             var query = $@"
                     SELECT
                         PartitionId
 	                    ,ObjectId
-                        ,DynamicData
-	                    --,DynamicData1
-                        --,DynamicData2
-                        --,DynamicData3
-                        --,DynamicData4
-                        --,DynamicData5
-                        ,testproperty
-                    FROM JsonTest
-                    --FROM JsonTestPartitioned
+                        --,DynamicData
+	                    ,DynamicData1
+                        ,DynamicData2
+                        ,DynamicData3
+                        ,DynamicData4
+                        ,DynamicData5                        
+                    --FROM JsonTest
+                    FROM JsonTestPartitioned
                     WHERE 
 	                    PartitionId = @id
                     ORDER BY {column} DESC
@@ -95,6 +93,8 @@ namespace jsontestapp.Controllers
             var parts = input.Split("/");
             var column = parts[0];
 
+            // This basically white lists allowed column names to give some injection protection
+            // Could possibly be cached to get rid of the reflection call
             var properties = typeof(T).GetProperties().Select(o => o.Name.ToUpperInvariant());
             if (!properties.Contains(column.ToUpperInvariant()))
             {

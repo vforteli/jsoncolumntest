@@ -21,65 +21,65 @@ namespace bulkloader
             await connection.OpenAsync();
             var stopwatch = Stopwatch.StartNew();
 
-            for (int i = 0; i < 100; i++)
-            {
-                var table = new DataTable();
-                table.Columns.Add("PartitionId", typeof(Guid));
-                table.Columns.Add("ObjectId", typeof(Guid));
-                table.Columns.Add("DynamicData", typeof(String));
-
-
-                var PartitionId = new Guid(i.ToString().PadLeft(32).Replace(' ', '0'));
-
-                for (int items = 0; items < 100000; items++)
-                {
-                    var ObjectId = Guid.NewGuid();
-                    var randomstuff = GenerateObject();
-                    table.Rows.Add(PartitionId, ObjectId, randomstuff);
-                }
-
-                var bulkcopy = new SqlBulkCopy(connection)
-                {
-                    DestinationTableName = "jsontest",
-                    BatchSize = 10000,
-                    BulkCopyTimeout = 300,
-                };
-
-                await bulkcopy.WriteToServerAsync(table);
-                Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
-            }
-
             //for (int i = 0; i < 100; i++)
             //{
             //    var table = new DataTable();
             //    table.Columns.Add("PartitionId", typeof(Guid));
             //    table.Columns.Add("ObjectId", typeof(Guid));
-            //    table.Columns.Add("DynamicData1", typeof(String));
-            //    table.Columns.Add("DynamicData2", typeof(String));
-            //    table.Columns.Add("DynamicData3", typeof(String));
-            //    table.Columns.Add("DynamicData4", typeof(String));
-            //    table.Columns.Add("DynamicData5", typeof(String));
+            //    table.Columns.Add("DynamicData", typeof(String));
+
 
             //    var PartitionId = new Guid(i.ToString().PadLeft(32).Replace(' ', '0'));
 
-            //    for (int users = 0; users < 50000; users++)
+            //    for (int items = 0; items < 100000; items++)
             //    {
             //        var ObjectId = Guid.NewGuid();
-            //        var randomstuff = GeneratePartitionedObject();
-            //        table.Rows.Add(PartitionId, ObjectId, randomstuff[0], randomstuff[1], randomstuff[2], randomstuff[3], randomstuff[4]);
+            //        var randomstuff = GenerateObject();
+            //        table.Rows.Add(PartitionId, ObjectId, randomstuff);
             //    }
 
             //    var bulkcopy = new SqlBulkCopy(connection)
             //    {
-            //        DestinationTableName = "jsontestpartitioned",
+            //        DestinationTableName = "jsontest",
             //        BatchSize = 10000,
             //        BulkCopyTimeout = 300,
             //    };
 
-
             //    await bulkcopy.WriteToServerAsync(table);
             //    Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
             //}
+
+            for (int i = 30; i < 100; i++)
+            {
+                var table = new DataTable();
+                table.Columns.Add("PartitionId", typeof(Guid));
+                table.Columns.Add("ObjectId", typeof(Guid));
+                table.Columns.Add("DynamicData1", typeof(String));
+                table.Columns.Add("DynamicData2", typeof(String));
+                table.Columns.Add("DynamicData3", typeof(String));
+                table.Columns.Add("DynamicData4", typeof(String));
+                table.Columns.Add("DynamicData5", typeof(String));
+
+                var PartitionId = new Guid(i.ToString().PadLeft(32).Replace(' ', '0'));
+
+                for (int users = 0; users < 10000; users++)
+                {
+                    var ObjectId = Guid.NewGuid();
+                    var randomstuff = GeneratePartitionedObject();
+                    table.Rows.Add(PartitionId, ObjectId, randomstuff[0], randomstuff[1], randomstuff[2], randomstuff[3], randomstuff[4]);
+                }
+
+                var bulkcopy = new SqlBulkCopy(connection)
+                {
+                    DestinationTableName = "jsontestpartitioned",
+                    BatchSize = 10000,
+                    BulkCopyTimeout = 300,
+                };
+
+
+                await bulkcopy.WriteToServerAsync(table);
+                Console.WriteLine($"Wrote partition {i} after {stopwatch.ElapsedMilliseconds} ms");
+            }
 
             Console.WriteLine($"Done after {stopwatch.ElapsedMilliseconds}ms");
         }
